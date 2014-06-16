@@ -16,10 +16,12 @@
 					//211318600
 					socket.emit('config', { mmsi: match[1] });
 					$('#mmsi').html("MMSI: " + match[1]);
+				} else {
+					$('#mmsi').html("Add an MMSI to your URL");
 				}
 				socket.on('data', function (data) {
 					if (typeof data.distance !== "undefined" ){
-						$('#distance').html(data.distance.toFixed(3));
+						$('#distance').html(data.distance.toFixed(3) + "  km");
 					}
 				});
 
@@ -31,9 +33,9 @@
 		</script>
 	</head>
 	<body>
-		<span id="mmsi" style="font-family: Arial;">peter</span>
+		<span id="mmsi" style="font-family: Arial;"></span>
 		<div style="font-size:160pt; font-family: Arial; text-align: center; vertical-align:middle; height:200px;">
-			<span id="distance">0</span> km<br>
+			<span id="distance"></span><br>
 		</div>
 
 	</body>
