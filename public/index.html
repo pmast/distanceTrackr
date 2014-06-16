@@ -1,21 +1,37 @@
 <html>
 	<head>
+		<title>AIS based distance tracker</title>
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 		<script>
-			var socket = io.connect('http://localhost');
-			socket.emit('config', { mmsi: 211318600 });
+			var socket = io.connect();
+
+			var parser = document.createElement('a');
+			parser.href = document.URL;
+
 			$(document).ready(function(){
-				socket.on('msg', function (data) {
-					console.log(data);
-					if (data.distance){
-						$('#distance').html(data.distance.toPrecision(3));
+
+				var match = parser.pathname.match(/\/(\d{9})/);
+				if (match){
+					//211318600
+					socket.emit('config', { mmsi: match[1] });
+					$('#mmsi').html("MMSI: " + match[1]);
+				}
+				socket.on('data', function (data) {
+					if (typeof data.distance !== "undefined" ){
+						$('#distance').html(data.distance.toFixed(3));
 					}
 				});
+
+				socket.on('msg', function (data) {
+					console.log(data);
+				});
+
 			});
 		</script>
 	</head>
 	<body>
+		<span id="mmsi" style="font-family: Arial;">peter</span>
 		<div style="font-size:160pt; font-family: Arial; text-align: center; vertical-align:middle; height:200px;">
 			<span id="distance">0</span> km<br>
 		</div>

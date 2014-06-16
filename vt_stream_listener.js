@@ -2,15 +2,13 @@ var net = require('net');
 var LatLon = require('./geo.js');
 
 
-function VTListener(url, port){
-	this.url = url;
-	this.port = port;
+function VTListener(){
 	this.vessels = {};
-	this.sockets = {};
 	this.tmp_msg = null;
 	this.message_count = 0;
 	this.unparsable_count = 0;
 	this.merged_count = 0;
+	this.io = null;
 
 	this.peter = "hans";
 
@@ -53,67 +51,51 @@ function VTListener(url, port){
 	})
 }
 
-VTListener.prototype.listen = function(){
+VTListener.prototype.listen = function(url, port, broadcast){
+	this.url = url;
+	this.port = port;
+	this.broadcast = broadcast;
 	this.client.connect(this.port, this.url);
 }
 
 
 // nc aissh.vesseltracker.com 44448 
 
-
-
-
-
-// client.connect(44448, 'aissh.vesseltracker.com');
-
-VTListener.prototype.__filter = function (cb, message){
-	// console.log(message.userid);
-	if (MMSIs.indexOf(message.userid) >= 0) cb(message);
-}
-
 VTListener.prototype.__process_message = function (message){
 	if (message.msgid <=3){
 		var point = new LatLon(message.pos[1], message.pos[0]);
+		var vessel = null
 		if (!this.vessels[message.userid]){
-			this.vessels[message.userid] = {
+			vessel = {
 				points:[point],
 				distance: 0,
 				mmsi: message.userid
-			}
+			};
+			this.vessels[message.userid] = vessel;
 		} else {
-			var vessel = this.vessels[message.userid]
+			vessel = this.vessels[message.userid]
 			if (vessel.points.length>0){
 				vessel.distance += vessel.points[vessel.points.length-1].distanceTo(point);
 				vessel.points = vessel.points.slice(vessel.points.length-11, vessel.points.length-1);
 			}
 			vessel.points.push(point);
-			this.broadcastLast(vessel);
 		}
+		this.broadcast(vessel);
 	}
 	// console.log(Object.keys(this.vessels).length);
 }
 
-VTListener.prototype.getData = function(mmsi){
-	return this.vessels[mmsi];
-}
-
-VTListener.prototype.addSocket = function(mmsi, socket){
-	if (!this.sockets[mmsi]){
-		this.sockets[mmsi]={};
-		this.sockets[mmsi][socket.id] = socket;
-	} else {
-		this.sockets[mmsi][socket.id] = socket;
-	}
-	console.log('number of sockets: %s', Object.keys(this.sockets[mmsi]).length);
-}
-
-VTListener.prototype.broadcastLast = function(vessel){
-	if (this.sockets[vessel.mmsi]){
-		console.log('number of sockets: %s', Object.keys(this.sockets[vessel.mmsi]).length);
-		for (client in this.sockets[vessel.mmsi]){
-			this.sockets[vessel.mmsi][client].emit("msg", vessel);
-		}
+VTListener.prototype.getVessel = function(mmsi){
+	if (this.vessels[mmsi]){
+		return this.vessels[mmsi];
 	}
 }
 
-module.exports = VTListener;
+VTListener.prototype.reset = function(mmsi){
+	if (this.vessels[mmsi]){
+		this.vessels[mmsi].distance = 0;
+		this.broadcast(this.vessels[mmsi], 3);
+	}
+}
+
+module.exports = new VTListener();

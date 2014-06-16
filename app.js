@@ -11,13 +11,12 @@ var path = require('path');
 var sio = require('socket.io');
 var app = express();
 
-var VTL = require('./main.js');
-vtl = new VTL('aissh.vesseltracker.com', 44448);
-vtl.listen();
+var vtl = require('./vt_stream_listener.js');
+
 
 
 // all environments
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 4000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 app.use(express.favicon());
@@ -27,6 +26,21 @@ app.use(express.urlencoded());
 app.use(express.methodOverride());
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get(/^\/(\d{9})\/reset\/?$/, function(req, res){
+	vtl.reset(req.params[0]);
+  // res.end(req.params[0] + "reset!");
+  res.redirect('/' + req.params[0]);
+});
+
+app.get(/^\/\d{9}\/?$/, function(req, res){
+  res.sendfile(__dirname + '/public/index.html');
+});
+
+
+// app.get(/^\/\d{9}\/?/, function(req, res){
+//   res.sendfile(__dirname + '/public/index.html');
+// });
 
 // development only
 if ('development' == app.get('env')) {
@@ -40,21 +54,26 @@ server = http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });
 
-
 var io = sio(server);
 
 io.on('connection', function (socket) {
-	console.log(socket.id);
-	// socket.emit('msg', { hello: 'world' });
-	socket.on('my other event', function (data) {
-		console.log(data);
-	});
+
 	socket.on('config', function(data){
 		if (data.mmsi){
-			vtl.addSocket(data.mmsi, socket);
-			console.log("added socket for mmsi %s", data.mmsi);
+			socket.join(data.mmsi);
 			socket.emit("msg", "added for mmsi " + data.mmsi + "\n");
-		}
-	})
+			socket.emit("data", vtl.getVessel(data.mmsi));
 
+			console.log("added socket to room %s", data.mmsi);
+
+		}
+	});
 });
+
+vtl.listen('aissh.vesseltracker.com', 44448, function (vessel, b){
+	if (b){
+		io.to(vessel.mmsi).emit("data", vessel);
+	} else {
+		io.to(vessel.mmsi).emit("data", vessel);
+	}
+});	
