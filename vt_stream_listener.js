@@ -81,6 +81,13 @@ VTListener.prototype.__process_message = function (message){
 			vessel.points.push(point);
 		}
 		this.broadcast(vessel);
+	} else if (message.msgid == 5){
+		if (this.vessels[message.userid]){
+			var name = message.name.trim().split('@')[0];
+			this.vessels[message.userid].name = name;
+
+			this.broadcast(this.vessels[message.userid]);
+		}
 	}
 	// console.log(Object.keys(this.vessels).length);
 }

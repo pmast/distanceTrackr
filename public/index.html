@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>AIS based distance tracker</title>
+		<title>AIS distance tracker</title>
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 		<script>
@@ -22,6 +22,10 @@
 				socket.on('data', function (data) {
 					if (typeof data.distance !== "undefined" ){
 						$('#distance').html(data.distance.toFixed(3) + "  km");
+					}
+					if (typeof data.name !== "undefined" ){
+						$('#mmsi').html(data.name + " (MMSI: " + data.mmsi + ")");
+						document.title = data.name + ' - AIS distance tracker';
 					}
 				});
 
