@@ -27,6 +27,14 @@
 						$('#mmsi').html(data.name + " (MMSI: " + data.mmsi + ")");
 						document.title = data.name + ' - AIS distance tracker';
 					}
+					if (typeof data.first !== "undefined" && typeof data.last !== "undefined"){
+						var first = new Date(data.first);
+						first = first.getFullYear() + "-" + first.getMonth() + "-" + first.getDate() + " " + first.getHours() + ":" + ((first.getMinutes()<10)?"0"+first.getMinutes():first.getMinutes());
+						var last = new Date(data.last);
+						last = last.getFullYear() + "-" + last.getMonth() + "-" + last.getDate() + " " + last.getHours() + ":" + ((last.getMinutes()<10)?"0"+last.getMinutes():last.getMinutes());
+						$('#date').html(first + " (" + last + ")");
+					}
+					console.log(data);
 				});
 
 				socket.on('msg', function (data) {
@@ -37,7 +45,8 @@
 		</script>
 	</head>
 	<body>
-		<span id="mmsi" style="font-family: Arial;"></span>
+		<span id="mmsi" style="font-family: Arial; font-size:6pt;"></span><br>
+		<span id="date" style="font-family: Arial; font-size:6pt;"></span>
 		<div style="font-size:160pt; font-family: Arial; text-align: center; vertical-align:middle; height:200px;">
 			<span id="distance"></span><br>
 		</div>

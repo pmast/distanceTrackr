@@ -69,16 +69,19 @@ VTListener.prototype.__process_message = function (message){
 			vessel = {
 				points:[point],
 				distance: 0,
-				mmsi: message.userid
+				mmsi: message.userid,
+				first: new Date(),
+				last: new Date()
 			};
 			this.vessels[message.userid] = vessel;
 		} else {
 			vessel = this.vessels[message.userid]
 			if (vessel.points.length>0){
 				vessel.distance += vessel.points[vessel.points.length-1].distanceTo(point);
-				vessel.points = vessel.points.slice(vessel.points.length-11, vessel.points.length-1);
+				vessel.points = vessel.points.slice(vessel.points.length-11, vessel.points.length);
 			}
 			vessel.points.push(point);
+			vessel.last = new Date();
 		}
 		this.broadcast(vessel);
 	} else if (message.msgid == 5){
@@ -101,6 +104,7 @@ VTListener.prototype.getVessel = function(mmsi){
 VTListener.prototype.reset = function(mmsi){
 	if (this.vessels[mmsi]){
 		this.vessels[mmsi].distance = 0;
+		this.vessels[mmsi].first = new Date();
 		this.broadcast(this.vessels[mmsi], 3);
 	}
 }
